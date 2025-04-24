@@ -1,0 +1,43 @@
+
+import React from 'react';
+import { Button } from "@/components/ui/button";
+
+const Navbar = () => {
+  return (
+    <nav className="glass-dark sticky top-0 z-50 px-4 py-3 mb-8">
+      <div className="container mx-auto flex justify-between items-center">
+        <div className="flex items-center space-x-2">
+          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center">
+            <span className="text-white font-bold text-sm">SG</span>
+          </div>
+          <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600">
+            StockGlass
+          </h1>
+        </div>
+        
+        <div className="flex gap-4 items-center">
+          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground">
+            Dashboard
+          </Button>
+          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground">
+            Stocks
+          </Button>
+          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground">
+            News
+          </Button>
+        </div>
+        
+        <div className="flex gap-3">
+          <Button variant="outline" className="glass border-primary/20 hover:border-primary/40">
+            Sign In
+          </Button>
+          <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+            Sign Up
+          </Button>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;
