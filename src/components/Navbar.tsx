@@ -1,16 +1,37 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
+import { User } from '@supabase/supabase-js';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+  const [user, setUser] = useState<User | null>(null);
 
-  const handleSignOut = () => {
-    localStorage.removeItem("currentUser");
-    navigate("/");
-    window.location.reload();
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error.message);
+    } else {
+      navigate("/");
+    }
   };
 
   return (
@@ -39,7 +60,7 @@ const Navbar = () => {
         </div>
         
         <div className="flex gap-3">
-          {currentUser ? (
+          {user ? (
             <Button 
               variant="outline" 
               className="glass border-primary/20 hover:border-primary/40"

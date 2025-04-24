@@ -6,14 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 const SignUp = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
@@ -21,19 +23,25 @@ const SignUp = () => {
       return;
     }
 
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
+    setIsLoading(true);
     
-    if (users.some((user: any) => user.email === email)) {
-      toast.error("Email already exists");
-      return;
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Account created successfully! Please check your email to confirm your account.");
+        navigate("/signin");
+      }
+    } catch (error) {
+      toast.error("An error occurred during sign up");
+    } finally {
+      setIsLoading(false);
     }
-
-    const newUser = { email, password };
-    users.push(newUser);
-    localStorage.setItem("users", JSON.stringify(users));
-    
-    toast.success("Account created successfully!");
-    navigate("/signin");
   };
 
   return (
@@ -77,8 +85,12 @@ const SignUp = () => {
                 placeholder="Confirm your password"
               />
             </div>
-            <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-blue-600">
-              Sign Up
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600"
+              disabled={isLoading}
+            >
+              {isLoading ? "Creating account..." : "Sign Up"}
             </Button>
           </form>
         </CardContent>

@@ -6,24 +6,34 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 const SignIn = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const user = users.find((u: any) => u.email === email && u.password === password);
-    
-    if (user) {
-      localStorage.setItem("currentUser", JSON.stringify(user));
-      toast.success("Successfully signed in!");
-      navigate("/");
-    } else {
-      toast.error("Invalid credentials");
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Successfully signed in!");
+        navigate("/");
+      }
+    } catch (error) {
+      toast.error("An error occurred during sign in");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -57,8 +67,12 @@ const SignIn = () => {
                 placeholder="Enter your password"
               />
             </div>
-            <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-blue-600">
-              Sign In
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600"
+              disabled={isLoading}
+            >
+              {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
         </CardContent>
