@@ -1,7 +1,25 @@
 
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 import { StockData } from '@/data/stockData';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface QuarterlyDividendChartProps {
   stock: StockData;
@@ -10,29 +28,45 @@ interface QuarterlyDividendChartProps {
 const QuarterlyDividendChart: React.FC<QuarterlyDividendChartProps> = ({ stock }) => {
   const hasNonZeroDividends = stock.quarterlyDividends.some(div => div.value > 0);
   
+  const chartData = {
+    labels: stock.quarterlyDividends.map(d => d.quarter),
+    datasets: [
+      {
+        label: 'Quarterly Dividends',
+        data: stock.quarterlyDividends.map(d => d.value),
+        backgroundColor: 'rgba(136, 132, 216, 0.6)',
+        borderColor: 'rgba(136, 132, 216, 1)',
+        borderWidth: 1,
+        borderRadius: 4,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: false,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
+  };
+
   return (
     <div className="h-full w-full p-4">
       <h3 className="text-lg font-semibold mb-4">Quarterly Dividends</h3>
       {hasNonZeroDividends ? (
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart
-            data={stock.quarterlyDividends}
-            margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-            <XAxis dataKey="quarter" />
-            <YAxis />
-            <Tooltip 
-              contentStyle={{ 
-                background: 'rgba(255, 255, 255, 0.8)', 
-                borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.5)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
-              }}
-            />
-            <Bar dataKey="value" fill="#8884d8" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="h-[200px]">
+          <Bar data={chartData} options={options} />
+        </div>
       ) : (
         <div className="flex items-center justify-center h-[200px] bg-gray-50/50 rounded-lg">
           <p className="text-gray-500">No dividend data available</p>
