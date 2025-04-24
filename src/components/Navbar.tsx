@@ -1,8 +1,18 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+
+  const handleSignOut = () => {
+    localStorage.removeItem("currentUser");
+    navigate("/");
+    window.location.reload();
+  };
+
   return (
     <nav className="glass-dark sticky top-0 z-50 px-4 py-3 mb-8">
       <div className="container mx-auto flex justify-between items-center">
@@ -16,7 +26,8 @@ const Navbar = () => {
         </div>
         
         <div className="flex gap-4 items-center">
-          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground">
+          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground"
+            onClick={() => navigate("/")}>
             Dashboard
           </Button>
           <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground">
@@ -28,12 +39,31 @@ const Navbar = () => {
         </div>
         
         <div className="flex gap-3">
-          <Button variant="outline" className="glass border-primary/20 hover:border-primary/40">
-            Sign In
-          </Button>
-          <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
-            Sign Up
-          </Button>
+          {currentUser ? (
+            <Button 
+              variant="outline" 
+              className="glass border-primary/20 hover:border-primary/40"
+              onClick={handleSignOut}
+            >
+              Sign Out
+            </Button>
+          ) : (
+            <>
+              <Button 
+                variant="outline" 
+                className="glass border-primary/20 hover:border-primary/40"
+                onClick={() => navigate("/signin")}
+              >
+                Sign In
+              </Button>
+              <Button 
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                onClick={() => navigate("/signup")}
+              >
+                Sign Up
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </nav>
