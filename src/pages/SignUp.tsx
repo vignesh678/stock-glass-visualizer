@@ -29,12 +29,19 @@ const SignUp = () => {
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          // Skip email verification
+          data: {
+            email_confirm: true
+          }
+        }
       });
       
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success("Account created successfully! Please check your email to confirm your account.");
+        toast.success("Account created successfully! You can now sign in.");
         navigate("/signin");
       }
     } catch (error) {
