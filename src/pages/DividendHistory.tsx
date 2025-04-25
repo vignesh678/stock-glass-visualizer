@@ -5,9 +5,9 @@ import { getStockDetailById, StockDetailData } from '@/data/niftyStocks';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import DividendHistoryChart from '@/components/DividendHistoryChart';
 
 const DividendHistory = () => {
   const { id } = useParams<{ id: string }>();
@@ -90,24 +90,7 @@ const DividendHistory = () => {
               </Card>
             </div>
             
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Year</TableHead>
-                  <TableHead>Dividend Amount (₹)</TableHead>
-                  <TableHead>Yield (%)</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {stock.dividendHistory.map((dividend, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{dividend.year}</TableCell>
-                    <TableCell>₹{dividend.amount.toFixed(2)}</TableCell>
-                    <TableCell>{dividend.yieldPercentage.toFixed(2)}%</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DividendHistoryChart data={stock.dividendHistory} />
             
             <div className="mt-6">
               <p className="text-sm text-muted-foreground">
