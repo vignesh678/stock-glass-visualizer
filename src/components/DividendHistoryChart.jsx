@@ -1,55 +1,90 @@
 
 import React from 'react';
+import { Line } from 'react-chartjs-2';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-} from 'recharts';
+} from 'chart.js';
 import { Card } from './ui/card';
 
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
 const DividendHistoryChart = ({ data }) => {
+  const chartData = {
+    labels: data.map(item => item.year),
+    datasets: [
+      {
+        label: 'Dividend Amount (₹)',
+        data: data.map(item => item.amount),
+        borderColor: '#8884d8',
+        backgroundColor: '#8884d8',
+        yAxisID: 'y',
+      },
+      {
+        label: 'Yield (%)',
+        data: data.map(item => item.yieldPercentage),
+        borderColor: '#82ca9d',
+        backgroundColor: '#82ca9d',
+        yAxisID: 'y1',
+      }
+    ]
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+    },
+    scales: {
+      y: {
+        type: 'linear',
+        display: true,
+        position: 'left',
+        title: {
+          display: true,
+          text: 'Dividend Amount (₹)'
+        }
+      },
+      y1: {
+        type: 'linear',
+        display: true,
+        position: 'right',
+        title: {
+          display: true,
+          text: 'Yield (%)'
+        },
+        grid: {
+          drawOnChartArea: false,
+        },
+      },
+    },
+  };
+
   return (
     <Card className="p-4">
       <div className="h-[400px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={data}
-            margin={{
-              top: 20,
-              right: 30,
-              left: 20,
-              bottom: 5,
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year" />
-            <YAxis yAxisId="left" />
-            <YAxis yAxisId="right" orientation="right" />
-            <Tooltip />
-            <Legend />
-            <Line
-              yAxisId="left"
-              type="monotone"
-              dataKey="amount"
-              stroke="#8884d8"
-              name="Dividend Amount (₹)"
-              activeDot={{ r: 8 }}
-            />
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey="yieldPercentage"
-              stroke="#82ca9d"
-              name="Yield (%)"
-              activeDot={{ r: 8 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <Line data={chartData} options={options} />
       </div>
     </Card>
   );

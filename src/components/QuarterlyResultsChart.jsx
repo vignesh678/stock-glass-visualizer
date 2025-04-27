@@ -1,41 +1,67 @@
 
 import React from 'react';
+import { Bar } from 'react-chartjs-2';
 import {
-  Bar,
-  BarChart,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-} from 'recharts';
+} from 'chart.js';
 import { Card } from './ui/card';
 
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
 const QuarterlyResultsChart = ({ data }) => {
+  const chartData = {
+    labels: data.map(item => item.quarter),
+    datasets: [
+      {
+        label: 'Revenue (₹ Cr)',
+        data: data.map(item => item.revenue),
+        backgroundColor: '#8884d8',
+      },
+      {
+        label: 'Net Profit (₹ Cr)',
+        data: data.map(item => item.netProfit),
+        backgroundColor: '#82ca9d',
+      },
+      {
+        label: 'EPS (₹)',
+        data: data.map(item => item.eps),
+        backgroundColor: '#ffc658',
+      }
+    ]
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
+  };
+
   return (
     <Card className="p-4">
       <div className="h-[400px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={data}
-            margin={{
-              top: 20,
-              right: 30,
-              left: 20,
-              bottom: 5,
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="quarter" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="revenue" fill="#8884d8" name="Revenue (₹ Cr)" />
-            <Bar dataKey="netProfit" fill="#82ca9d" name="Net Profit (₹ Cr)" />
-            <Bar dataKey="eps" fill="#ffc658" name="EPS (₹)" />
-          </BarChart>
-        </ResponsiveContainer>
+        <Bar data={chartData} options={options} />
       </div>
     </Card>
   );
