@@ -2,35 +2,35 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
-import { User } from '@supabase/supabase-js';
+import { authService } from "@/services/authService";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
+    // Check if user is logged in
+    const currentUser = authService.getCurrentUser();
+    setUser(currentUser);
+    
+    // Add event listener for storage changes (for multi-tab sync)
+    const handleStorageChange = () => {
+      setUser(authService.getCurrentUser());
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
     return () => {
-      subscription.unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error.message);
-    } else {
+    try {
+      authService.signOut();
+      setUser(null);
       navigate("/");
+    } catch (error) {
+      console.error('Error signing out:', error);
     }
   };
 

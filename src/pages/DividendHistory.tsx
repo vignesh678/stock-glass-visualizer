@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import DividendHistoryChart from '@/components/DividendHistoryChart';
-import { stockData } from '@/data/stockData';
+import { StockData } from '@/data/stockData';
 
 // Define the correct DividendData type
 interface DividendData {
@@ -23,7 +23,7 @@ const DividendHistory = () => {
     const fetchStock = async () => {
       try {
         setIsLoading(true);
-        const foundStock = stockData.find(s => s.id.toString() === id);
+        const foundStock = StockData.find(s => s.id.toString() === id);
         
         if (foundStock) {
           setStock(foundStock);

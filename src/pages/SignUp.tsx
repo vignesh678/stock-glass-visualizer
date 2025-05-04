@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { authService } from "@/services/authService";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -26,26 +26,12 @@ const SignUp = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: window.location.origin,
-          // Skip email verification
-          data: {
-            email_confirm: true
-          }
-        }
-      });
-      
-      if (error) {
-        toast.error(error.message);
-      } else {
-        toast.success("Account created successfully! You can now sign in.");
-        navigate("/signin");
-      }
-    } catch (error) {
-      toast.error("An error occurred during sign up");
+      await authService.signUp(email, password);
+      toast.success("Account created successfully! You are now signed in.");
+      navigate("/");
+    } catch (error: any) {
+      const message = error.response?.data?.message || "An error occurred during sign up";
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
