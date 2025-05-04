@@ -1,104 +1,133 @@
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getStockDetailById, StockDetailData } from '@/data/niftyStocks';
+import { useParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import DividendHistoryChart from '@/components/DividendHistoryChart';
+import { stockData } from '@/data/stockData';
+
+// Define the correct DividendData type
+interface DividendData {
+  year: string; // Changed from number to string to match the expected type
+  amount: number;
+  yieldPercentage: number;
+}
 
 const DividendHistory = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [stock, setStock] = useState<StockDetailData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
+  const [stock, setStock] = useState<any>(null);
+  const [dividendData, setDividendData] = useState<DividendData[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  
   useEffect(() => {
-    try {
-      setIsLoading(true);
-      if (!id) return;
-      
-      const detailedData = getStockDetailById(parseInt(id));
-      setStock(detailedData);
-    } catch (error) {
-      toast.error("Failed to load dividend history");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
+    const fetchStock = async () => {
+      try {
+        setIsLoading(true);
+        const foundStock = stockData.find(s => s.id.toString() === id);
+        
+        if (foundStock) {
+          setStock(foundStock);
+          
+          // Generate some mock dividend data
+          const mockDividendData: DividendData[] = [];
+          const currentYear = new Date().getFullYear();
+          
+          for (let i = 0; i < 10; i++) {
+            const year = currentYear - i;
+            const amount = parseFloat((Math.random() * 20 + 5).toFixed(2));
+            const yieldPercentage = parseFloat((amount / foundStock.price * 100).toFixed(2));
+            
+            mockDividendData.push({
+              year: year.toString(), // Convert to string to match DividendData type
+              amount,
+              yieldPercentage
+            });
+          }
+          
+          setDividendData(mockDividendData.reverse());
+        }
+      } catch (error) {
+        console.error("Error fetching stock data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchStock();
   }, [id]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gray-100">
         <Navbar />
-        <div className="container mx-auto px-4 py-8 flex justify-center items-center">
-          <p>Loading dividend history...</p>
+        <div className="container mx-auto px-4 py-8">
+          <p>Loading...</p>
         </div>
       </div>
     );
   }
-
+  
   if (!stock) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gray-100">
         <Navbar />
         <div className="container mx-auto px-4 py-8">
           <p>Stock not found</p>
-          <Button onClick={() => navigate('/')}>Back to Dashboard</Button>
         </div>
       </div>
     );
   }
 
-  const totalDividends = stock.dividendHistory.reduce((total, div) => total + div.amount, 0);
-  const averageYield = stock.dividendHistory.reduce((total, div) => total + div.yieldPercentage, 0) / stock.dividendHistory.length;
-
   return (
-    <div className="min-h-screen pb-12">
+    <div className="min-h-screen bg-gray-100">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate(`/stock/${id}`)} 
-          className="mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to {stock.symbol}
-        </Button>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">{stock.name} Dividend History</h1>
+          <p className="text-gray-600">Historical dividend payments and yields</p>
+        </div>
         
-        <Card className="glass-card mb-6">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold">
-              Dividend History for {stock.name} ({stock.symbol})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground">Total Dividends (5 Years)</p>
-                  <p className="text-2xl font-bold">₹{totalDividends.toFixed(2)}</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground">Average Yield</p>
-                  <p className="text-2xl font-bold">{averageYield.toFixed(2)}%</p>
-                </CardContent>
-              </Card>
-            </div>
-            
-            <DividendHistoryChart data={stock.dividendHistory} />
-            
-            <div className="mt-6">
-              <p className="text-sm text-muted-foreground">
-                * Note: Dividend yields are calculated based on the share price at the time of declaration.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Dividend History (Last 10 Years)</CardTitle>
+              <CardDescription>Annual dividend payments and yield percentages</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[400px]">
+                <DividendHistoryChart data={dividendData} />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Dividend Payment Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4">Year</th>
+                      <th className="text-right py-3 px-4">Amount (₹)</th>
+                      <th className="text-right py-3 px-4">Yield (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dividendData.map((dividend) => (
+                      <tr key={dividend.year} className="border-b">
+                        <td className="py-3 px-4">{dividend.year}</td>
+                        <td className="text-right py-3 px-4">{dividend.amount.toFixed(2)}</td>
+                        <td className="text-right py-3 px-4">{dividend.yieldPercentage.toFixed(2)}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
