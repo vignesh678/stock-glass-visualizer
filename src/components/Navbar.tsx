@@ -7,7 +7,7 @@ import { User } from '@supabase/supabase-js';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     // Get initial session
@@ -51,10 +51,12 @@ const Navbar = () => {
             onClick={() => navigate("/")}>
             Dashboard
           </Button>
-          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground">
+          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground"
+            onClick={() => navigate("/stocks")}>
             Stocks
           </Button>
-          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground">
+          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground"
+            onClick={() => navigate("/news")}>
             News
           </Button>
         </div>
