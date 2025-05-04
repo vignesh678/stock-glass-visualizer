@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getStockDetailById, StockDetailData } from '@/data/niftyStocks';
+import { getStockDetailById } from '@/data/niftyStocks';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,9 +31,9 @@ ChartJS.register(
 );
 
 const HighLowData = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [stock, setStock] = useState<StockDetailData | null>(null);
+  const [stock, setStock] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
