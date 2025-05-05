@@ -1,11 +1,12 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { authService } from "@/services/authService";
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -34,6 +35,14 @@ const Navbar = () => {
     }
   };
 
+  const navigateToDashboard = () => {
+    if (authService.isAuthenticated()) {
+      navigate("/dashboard");
+    } else {
+      navigate("/signin");
+    }
+  };
+
   return (
     <nav className="glass-dark sticky top-0 z-50 px-4 py-3 mb-8">
       <div className="container mx-auto flex justify-between items-center">
@@ -47,8 +56,12 @@ const Navbar = () => {
         </div>
         
         <div className="flex gap-4 items-center">
-          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground"
-            onClick={() => navigate("/")}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-foreground/80 hover:text-foreground"
+            onClick={navigateToDashboard}
+          >
             Dashboard
           </Button>
           <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground"
