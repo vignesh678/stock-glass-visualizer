@@ -10,6 +10,10 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, BellOff, Trash2 } from 'lucide-react';
 import { NiftyStock } from '@/data/niftyStocks';
 import { fetchStockById, subscribeToStockUpdates } from '@/services/stockApi';
+import { authService } from '@/services/authService';
+import Portfolio from '@/components/Portfolio';
+import NotificationSettings from '@/components/NotificationSettings';
+import { portfolioService } from '@/services/portfolioService';
 
 interface WatchlistItem {
   id: number;
@@ -27,6 +31,12 @@ const Dashboard = () => {
   const [targetPrice, setTargetPrice] = useState<number | null>(null);
 
   useEffect(() => {
+    // Check authentication
+    if (!authService.isAuthenticated()) {
+      navigate('/signin');
+      return;
+    }
+    
     // Load watchlist from localStorage
     const savedWatchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
     setWatchlist(savedWatchlist);
@@ -46,6 +56,18 @@ const Dashboard = () => {
                 (updatedStock.price >= item.targetPrice && item.price < item.targetPrice) || 
                 (updatedStock.price <= item.targetPrice && item.price > item.targetPrice)
               ) {
+                // Send notification via email if enabled
+                const emailNotifEnabled = JSON.parse(localStorage.getItem('notificationSettings') || '{"email": false}').email;
+                const userEmail = authService.getUserEmail();
+                
+                if (emailNotifEnabled && userEmail) {
+                  portfolioService.sendEmailNotification(
+                    userEmail,
+                    `StockGlass Alert: ${item.symbol} Target Price Reached`,
+                    `${item.symbol} (${item.name}) has reached your target price of ₹${item.targetPrice}!`
+                  ).catch(error => console.error('Failed to send email notification:', error));
+                }
+                
                 toast.success(`${item.symbol} has reached your target price of ₹${item.targetPrice}!`, {
                   duration: 10000
                 });
@@ -64,7 +86,7 @@ const Dashboard = () => {
       // Cleanup subscription on unmount
       return () => unsubscribe();
     }
-  }, []);
+  }, [navigate]);
 
   // Save watchlist to localStorage whenever it changes
   useEffect(() => {
@@ -130,6 +152,12 @@ const Dashboard = () => {
           </Button>
         </div>
         
+        {/* Portfolio Component */}
+        <div className="mb-8">
+          <Portfolio />
+        </div>
+        
+        {/* Watchlist */}
         <Card className="glass mb-8">
           <CardHeader>
             <div className="flex justify-between items-center">
@@ -232,6 +260,12 @@ const Dashboard = () => {
           </CardContent>
         </Card>
         
+        {/* Notification Settings */}
+        <div className="mb-8">
+          <NotificationSettings />
+        </div>
+        
+        {/* Market Summary */}
         <Card className="glass">
           <CardHeader>
             <CardTitle className="text-xl">Market Summary</CardTitle>
