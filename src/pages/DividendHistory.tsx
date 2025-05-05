@@ -1,199 +1,184 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { StockData } from '@/data/stockData'; // Fix import name
 import DividendHistoryChart from '@/components/DividendHistoryChart';
 import QuarterlyDividendChart from '@/components/QuarterlyDividendChart';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { fetchStockById } from '@/services/stockApi';
-import { stockData } from '@/data/stockData';
 
+// Define correct interface for DividendData
 interface DividendData {
   year: string;
+  amount: number;
+  yieldPercentage: number;
+  recordDate: string;
+  exDate: string;
+  paymentDate: string;
+}
+
+// Define correct props for QuarterlyDividendChart
+interface QuarterlyDividendData {
+  quarter: string;
   dividendPerShare: number;
 }
 
 const DividendHistory = () => {
   const { id } = useParams<{ id: string }>();
-  const [stockDetails, setStockDetails] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState<string>('2023');
-  const [dividendData, setDividendData] = useState<DividendData[]>([]);
+  const [stock, setStock] = useState<StockData | null>(null);
+  const [dividendHistory, setDividendHistory] = useState<DividendData[]>([]);
+  const [quarterlyDividends, setQuarterlyDividends] = useState<QuarterlyDividendData[]>([]);
 
   useEffect(() => {
-    const loadStockData = async () => {
-      if (id) {
-        setIsLoading(true);
-        try {
-          const stock = await fetchStockById(parseInt(id));
-          setStockDetails(stock);
-
-          // Mock dividend data - in a real app this would come from an API
-          const mockDividendData: DividendData[] = [
-            { year: '2019', dividendPerShare: 12.5 },
-            { year: '2020', dividendPerShare: 10.0 },
-            { year: '2021', dividendPerShare: 15.0 },
-            { year: '2022', dividendPerShare: 18.5 },
-            { year: '2023', dividendPerShare: 22.0 },
-          ];
+    const fetchStock = async () => {
+      try {
+        // Simulate API call
+        // In a real app, you would fetch from your API
+        setTimeout(() => {
+          setStock({
+            id: parseInt(id || '1'),
+            symbol: 'HDFC',
+            name: 'HDFC Bank Ltd.',
+            price: 1689.75,
+            change: 15.30,
+            sector: 'Banking',
+            marketCap: 9357.45,
+            peRatio: 22.5,
+            dividendYield: 3.2,
+            volume: 4563789,
+          });
           
-          setDividendData(mockDividendData);
-        } catch (error) {
-          console.error('Failed to load stock data:', error);
-        } finally {
-          setIsLoading(false);
-        }
+          // Simulate dividend history data
+          setDividendHistory([
+            {
+              year: '2023',
+              amount: 18.0,
+              yieldPercentage: 1.06,
+              recordDate: '2023-05-15',
+              exDate: '2023-05-10',
+              paymentDate: '2023-05-25',
+            },
+            {
+              year: '2022',
+              amount: 15.5,
+              yieldPercentage: 0.98,
+              recordDate: '2022-05-14',
+              exDate: '2022-05-09',
+              paymentDate: '2022-05-24',
+            },
+            {
+              year: '2021',
+              amount: 12.5,
+              yieldPercentage: 0.87,
+              recordDate: '2021-05-12',
+              exDate: '2021-05-07',
+              paymentDate: '2021-05-20',
+            },
+            {
+              year: '2020',
+              amount: 10.0,
+              yieldPercentage: 0.92,
+              recordDate: '2020-05-15',
+              exDate: '2020-05-10',
+              paymentDate: '2020-05-25',
+            },
+          ]);
+          
+          // Quarterly dividend data for chart
+          setQuarterlyDividends([
+            { quarter: 'Q1 2023', dividendPerShare: 4.5 },
+            { quarter: 'Q2 2023', dividendPerShare: 4.5 },
+            { quarter: 'Q3 2023', dividendPerShare: 4.5 },
+            { quarter: 'Q4 2023', dividendPerShare: 4.5 },
+            { quarter: 'Q1 2022', dividendPerShare: 3.75 },
+            { quarter: 'Q2 2022', dividendPerShare: 3.75 },
+            { quarter: 'Q3 2022', dividendPerShare: 4.0 },
+            { quarter: 'Q4 2022', dividendPerShare: 4.0 },
+          ]);
+        }, 500);
+      } catch (error) {
+        console.error('Error fetching stock data:', error);
       }
     };
 
-    loadStockData();
+    fetchStock();
   }, [id]);
 
-  // Get the years for which we have dividend data
-  const availableYears = dividendData.map(d => d.year);
-
-  // Generate quarterly dividend data for the selected year (mock data)
-  const quarterlyDividendData = [
-    { quarter: 'Q1', dividendPerShare: selectedYear === '2023' ? 5.5 : selectedYear === '2022' ? 4.5 : 3.5 },
-    { quarter: 'Q2', dividendPerShare: selectedYear === '2023' ? 5.5 : selectedYear === '2022' ? 4.5 : 3.5 },
-    { quarter: 'Q3', dividendPerShare: selectedYear === '2023' ? 5.5 : selectedYear === '2022' ? 4.5 : 3.5 },
-    { quarter: 'Q4', dividendPerShare: selectedYear === '2023' ? 5.5 : selectedYear === '2022' ? 5.0 : 4.0 },
-  ];
-
   return (
-    <div className="min-h-screen pb-12">
+    <div className="min-h-screen">
       <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-blue-600">
-          Dividend History {stockDetails && `- ${stockDetails.name} (${stockDetails.symbol})`}
-        </h1>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Annual Dividend History */}
-          <Card className="glass">
-            <CardHeader>
-              <CardTitle>Annual Dividend History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="flex items-center justify-center h-64">
-                  <p>Loading dividend data...</p>
-                </div>
-              ) : (
-                <div className="h-64">
-                  <DividendHistoryChart data={dividendData} />
-                </div>
-              )}
-              <p className="mt-4 text-sm text-muted-foreground">
-                Annual dividend payouts over the last 5 years
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Quarterly Dividend Data */}
-          <Card className="glass">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Quarterly Dividend</CardTitle>
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Select Year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableYears.map((year) => (
-                    <SelectItem key={year} value={year}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="flex items-center justify-center h-64">
-                  <p>Loading dividend data...</p>
-                </div>
-              ) : (
-                <div className="h-64">
-                  <QuarterlyDividendChart data={quarterlyDividendData} />
-                </div>
-              )}
-              <p className="mt-4 text-sm text-muted-foreground">
-                Quarterly dividend distribution for {selectedYear}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Dividend Policy */}
-        <Card className="glass mb-8">
-          <CardHeader>
-            <CardTitle>Dividend Policy</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">
-              {stockDetails?.name || 'This company'} typically distributes dividends on a quarterly basis, with the final 
-              dividend determined at the Annual General Meeting. The company aims to maintain a 
-              dividend payout ratio of 30-40% of annual profits, subject to capital requirements 
-              and business outlook.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              * Dividend policy information is indicative and based on historical patterns, not guaranteed for future payouts.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Dividend Calendar */}
-        <Card className="glass">
-          <CardHeader>
-            <CardTitle>Dividend Calendar (2023)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50 dark:bg-gray-800">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Quarter</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ex-Dividend Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Record Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Payment Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">Q1 2023</td>
-                    <td className="px-6 py-4 whitespace-nowrap">Apr 15, 2023</td>
-                    <td className="px-6 py-4 whitespace-nowrap">Apr 18, 2023</td>
-                    <td className="px-6 py-4 whitespace-nowrap">Apr 30, 2023</td>
-                    <td className="px-6 py-4 whitespace-nowrap">₹5.50 per share</td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">Q2 2023</td>
-                    <td className="px-6 py-4 whitespace-nowrap">Jul 15, 2023</td>
-                    <td className="px-6 py-4 whitespace-nowrap">Jul 18, 2023</td>
-                    <td className="px-6 py-4 whitespace-nowrap">Jul 31, 2023</td>
-                    <td className="px-6 py-4 whitespace-nowrap">₹5.50 per share</td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">Q3 2023</td>
-                    <td className="px-6 py-4 whitespace-nowrap">Oct 14, 2023</td>
-                    <td className="px-6 py-4 whitespace-nowrap">Oct 17, 2023</td>
-                    <td className="px-6 py-4 whitespace-nowrap">Oct 31, 2023</td>
-                    <td className="px-6 py-4 whitespace-nowrap">₹5.50 per share</td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">Q4 2023</td>
-                    <td className="px-6 py-4 whitespace-nowrap">Jan 15, 2024</td>
-                    <td className="px-6 py-4 whitespace-nowrap">Jan 18, 2024</td>
-                    <td className="px-6 py-4 whitespace-nowrap">Jan 31, 2024</td>
-                    <td className="px-6 py-4 whitespace-nowrap">₹5.50 per share</td>
-                  </tr>
-                </tbody>
-              </table>
+        {stock ? (
+          <>
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold mb-2">{stock.name} ({stock.symbol})</h1>
+              <p className="text-muted-foreground">Dividend History</p>
             </div>
-          </CardContent>
-        </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Historical Dividends</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <DividendHistoryChart data={dividendHistory} />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quarterly Dividends</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <QuarterlyDividendChart stock={{ quarterlyDividends: quarterlyDividends }} />
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Dividend History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Year</TableHead>
+                      <TableHead>Dividend Amount (₹)</TableHead>
+                      <TableHead>Dividend Yield</TableHead>
+                      <TableHead>Record Date</TableHead>
+                      <TableHead>Ex-Dividend Date</TableHead>
+                      <TableHead>Payment Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {dividendHistory.map((entry) => (
+                      <TableRow key={entry.year}>
+                        <TableCell className="font-medium">{entry.year}</TableCell>
+                        <TableCell>₹{entry.amount.toFixed(2)}</TableCell>
+                        <TableCell>{(entry.yieldPercentage).toFixed(2)}%</TableCell>
+                        <TableCell>{new Date(entry.recordDate).toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(entry.exDate).toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(entry.paymentDate).toLocaleDateString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <div className="flex justify-center items-center h-64">
+            <p className="text-lg">Loading dividend history...</p>
+          </div>
+        )}
       </div>
     </div>
   );
