@@ -62,10 +62,5 @@ export const authService = {
 
   isAuthenticated(): boolean {
     return !!localStorage.getItem('token');
-  },
-  
-  getUserEmail(): string | null {
-    const user = this.getCurrentUser();
-    return user ? user.email : null;
   }
 };
