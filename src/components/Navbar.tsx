@@ -36,12 +36,9 @@ const Navbar = () => {
   };
 
   const navigateToDashboard = () => {
-    if (authService.isAuthenticated()) {
+    
       navigate("/dashboard");
-    } else {
-      navigate("/signin");
-    }
-  };
+  }
 
   return (
     <nav className="glass-dark sticky top-0 z-50 px-4 py-3 mb-8">
