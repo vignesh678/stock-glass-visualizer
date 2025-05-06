@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getStockDetailById, StockDetailData } from '@/data/niftyStocks';
+import { stocksData } from '@/data/stockData';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,19 +9,61 @@ import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import QuarterlyResultsChart from '@/components/QuarterlyResultsChart';
 
+interface QuarterlyData {
+  quarter: string;
+  revenue: number;
+  netProfit: number;
+  eps: number;
+}
+
 const QuarterlyResults = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [stock, setStock] = useState<StockDetailData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [stock, setStock] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [quarterlyData, setQuarterlyData] = useState<QuarterlyData[]>([]);
 
   useEffect(() => {
     try {
       setIsLoading(true);
       if (!id) return;
       
-      const detailedData = getStockDetailById(parseInt(id));
-      setStock(detailedData);
+      const foundStock = stocksData.find(s => s.id === id);
+      
+      if (foundStock) {
+        setStock(foundStock);
+        
+        // Generate mock quarterly data since it's not available in the stockData
+        const mockQuarterlyData: QuarterlyData[] = [];
+        const currentYear = new Date().getFullYear();
+        const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+        
+        // Generate data for the last 2 years (8 quarters)
+        for (let i = 0; i < 8; i++) {
+          const quarterIndex = i % 4;
+          const yearOffset = Math.floor(i / 4);
+          const year = currentYear - yearOffset;
+          
+          const baseRevenue = foundStock.price * 100; // Use price as a base for realistic numbers
+          const randomFactor = 0.8 + Math.random() * 0.4; // Random factor between 0.8 and 1.2
+          
+          const revenue = parseFloat((baseRevenue * randomFactor).toFixed(2));
+          const netProfit = parseFloat((revenue * (0.15 + Math.random() * 0.1)).toFixed(2)); // 15-25% profit margin
+          const eps = parseFloat((netProfit / 1000).toFixed(2)); // Simplified EPS calculation
+          
+          mockQuarterlyData.push({
+            quarter: `${quarters[quarterIndex]} ${year}`,
+            revenue,
+            netProfit,
+            eps
+          });
+        }
+        
+        // Sort data chronologically
+        setQuarterlyData(mockQuarterlyData.reverse());
+      } else {
+        toast.error("Stock not found");
+      }
     } catch (error) {
       toast.error("Failed to load quarterly results");
       console.error(error);
@@ -72,7 +114,7 @@ const QuarterlyResults = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <QuarterlyResultsChart data={stock.quarterlyResults} />
+            <QuarterlyResultsChart data={quarterlyData} />
             
             <div className="mt-6">
               <p className="text-sm text-muted-foreground">

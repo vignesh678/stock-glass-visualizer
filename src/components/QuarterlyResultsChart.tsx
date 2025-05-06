@@ -39,12 +39,13 @@ const QuarterlyResultsChart = ({ data }: QuarterlyResultsChartProps) => {
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="quarter" />
-            <YAxis />
+            <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
+            <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
             <Tooltip />
             <Legend />
-            <Bar dataKey="revenue" fill="#8884d8" name="Revenue (₹ Cr)" />
-            <Bar dataKey="netProfit" fill="#82ca9d" name="Net Profit (₹ Cr)" />
-            <Bar dataKey="eps" fill="#ffc658" name="EPS (₹)" />
+            <Bar yAxisId="left" dataKey="revenue" fill="#8884d8" name="Revenue (₹ Cr)" />
+            <Bar yAxisId="left" dataKey="netProfit" fill="#82ca9d" name="Net Profit (₹ Cr)" />
+            <Bar yAxisId="right" dataKey="eps" fill="#ffc658" name="EPS (₹)" />
           </BarChart>
         </ResponsiveContainer>
       </div>
