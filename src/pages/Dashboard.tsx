@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { fetchStockById, subscribeToStockUpdates } from '@/services/stockApi';
-import { authService } from '@/services/authService';
 import Portfolio from '@/components/Portfolio';
 import NotificationSettings from '@/components/NotificationSettings';
 import { portfolioService } from '@/services/portfolioService';
@@ -26,12 +25,6 @@ const Dashboard = () => {
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
 
   useEffect(() => {
-    // Check authentication
-    if (!authService.isAuthenticated()) {
-      navigate('/signin');
-      return;
-    }
-    
     // Load watchlist from localStorage
     const savedWatchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
     setWatchlist(savedWatchlist);
@@ -53,7 +46,7 @@ const Dashboard = () => {
               ) {
                 // Send notification via email if enabled
                 const emailNotifEnabled = JSON.parse(localStorage.getItem('notificationSettings') || '{"email": false}').email;
-                const userEmail = authService.getUserEmail();
+                const userEmail = localStorage.getItem('userEmail');
                 
                 if (emailNotifEnabled && userEmail) {
                   portfolioService.sendEmailNotification(
