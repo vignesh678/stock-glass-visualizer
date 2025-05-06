@@ -4,11 +4,11 @@ import { useParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import DividendHistoryChart from '@/components/DividendHistoryChart';
-import { StockData } from '@/data/stockData';
+import { stocksData } from '@/data/stockData';
 
 // Define the correct DividendData type
 interface DividendData {
-  year: string; // Changed from number to string to match the expected type
+  year: string;
   amount: number;
   yieldPercentage: number;
 }
@@ -23,7 +23,7 @@ const DividendHistory = () => {
     const fetchStock = async () => {
       try {
         setIsLoading(true);
-        const foundStock = StockData.find(s => s.id.toString() === id);
+        const foundStock = stocksData.find(s => s.id === id);
         
         if (foundStock) {
           setStock(foundStock);
@@ -38,7 +38,7 @@ const DividendHistory = () => {
             const yieldPercentage = parseFloat((amount / foundStock.price * 100).toFixed(2));
             
             mockDividendData.push({
-              year: year.toString(), // Convert to string to match DividendData type
+              year: year.toString(),
               amount,
               yieldPercentage
             });
