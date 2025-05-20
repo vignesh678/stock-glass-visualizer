@@ -14,8 +14,6 @@ import QuarterlyResults from "./pages/QuarterlyResults";
 import DividendHistory from "./pages/DividendHistory";
 import HighLowData from "./pages/HighLowData";
 import CompanyHistory from "./pages/CompanyHistory";
-import Stocks from "./pages/Stocks";
-import News from "./pages/News";
 
 const queryClient = new QueryClient();
 
@@ -30,8 +28,6 @@ const App = () => (
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/stocks" element={<Stocks />} />
-          <Route path="/news" element={<News />} />
           <Route path="/stock/:id" element={<StockDetail />} />
           <Route path="/stock/:id/quarterly" element={<QuarterlyResults />} />
           <Route path="/stock/:id/dividends" element={<DividendHistory />} />

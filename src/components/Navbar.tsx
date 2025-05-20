@@ -2,35 +2,35 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { authService } from "@/services/authService";
+import { supabase } from "@/lib/supabase";
+import { User } from '@supabase/supabase-js';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Check if user is logged in
-    const currentUser = authService.getCurrentUser();
-    setUser(currentUser);
-    
-    // Add event listener for storage changes (for multi-tab sync)
-    const handleStorageChange = () => {
-      setUser(authService.getCurrentUser());
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      subscription.unsubscribe();
     };
   }, []);
 
   const handleSignOut = async () => {
-    try {
-      authService.signOut();
-      setUser(null);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error.message);
+    } else {
       navigate("/");
-    } catch (error) {
-      console.error('Error signing out:', error);
     }
   };
 
@@ -51,12 +51,10 @@ const Navbar = () => {
             onClick={() => navigate("/")}>
             Dashboard
           </Button>
-          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground"
-            onClick={() => navigate("/stocks")}>
+          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground">
             Stocks
           </Button>
-          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground"
-            onClick={() => navigate("/news")}>
+          <Button variant="ghost" size="sm" className="text-foreground/80 hover:text-foreground">
             News
           </Button>
         </div>

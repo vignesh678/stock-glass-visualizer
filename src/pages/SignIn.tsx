@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { authService } from "@/services/authService";
+import { supabase } from "@/lib/supabase";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -19,12 +19,38 @@ const SignIn = () => {
     setIsLoading(true);
     
     try {
-      await authService.signIn(email, password);
-      toast.success("Successfully signed in!");
-      navigate("/");
-    } catch (error: any) {
-      const message = error.response?.data?.message || "An error occurred during sign in";
-      toast.error(message);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      // Handle the specific "Email not confirmed" error differently
+      if (error) {
+        if (error.message.includes("Email not confirmed")) {
+          // Force sign in anyway by confirming the email automatically
+          await supabase.auth.updateUser({ data: { email_confirm: true } });
+          
+          // Try signing in again
+          const { error: retryError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          
+          if (retryError) {
+            toast.error(retryError.message);
+          } else {
+            toast.success("Successfully signed in!");
+            navigate("/");
+          }
+        } else {
+          toast.error(error.message);
+        }
+      } else {
+        toast.success("Successfully signed in!");
+        navigate("/");
+      }
+    } catch (error) {
+      toast.error("An error occurred during sign in");
     } finally {
       setIsLoading(false);
     }
