@@ -2,12 +2,31 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getStockDetailById, StockDetailData } from '@/data/niftyStocks';
+import { stocksData } from '@/data/stockData';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const DividendHistory = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,8 +39,30 @@ const DividendHistory = () => {
       setIsLoading(true);
       if (!id) return;
       
+      // Try to get detailed data from niftyStocks
       const detailedData = getStockDetailById(parseInt(id));
-      setStock(detailedData);
+      
+      // If no detailed data is found, use data from stocksData
+      if (!detailedData) {
+        const stockData = stocksData.find(s => s.id === id);
+        if (stockData) {
+          // Create mock dividend history
+          const mockDividendHistory = stockData.quarterlyDividends
+            .filter(q => q.value > 0)
+            .map((q, index) => ({
+              year: `202${Math.floor(index / 2)}`,
+              amount: q.value * 4,
+              yieldPercentage: (q.value * 4 / stockData.price) * 100
+            }));
+          
+          setStock({
+            ...stockData,
+            dividendHistory: mockDividendHistory
+          } as StockDetailData);
+        }
+      } else {
+        setStock(detailedData);
+      }
     } catch (error) {
       toast.error("Failed to load dividend history");
       console.error(error);
@@ -41,12 +82,12 @@ const DividendHistory = () => {
     );
   }
 
-  if (!stock) {
+  if (!stock || !stock.dividendHistory) {
     return (
       <div className="min-h-screen">
         <Navbar />
         <div className="container mx-auto px-4 py-8">
-          <p>Stock not found</p>
+          <p>No dividend data available for this stock</p>
           <Button onClick={() => navigate('/')}>Back to Dashboard</Button>
         </div>
       </div>
@@ -54,7 +95,66 @@ const DividendHistory = () => {
   }
 
   const totalDividends = stock.dividendHistory.reduce((total, div) => total + div.amount, 0);
-  const averageYield = stock.dividendHistory.reduce((total, div) => total + div.yieldPercentage, 0) / stock.dividendHistory.length;
+  const averageYield = stock.dividendHistory.length > 0 
+    ? stock.dividendHistory.reduce((total, div) => total + div.yieldPercentage, 0) / stock.dividendHistory.length
+    : 0;
+  
+  const chartData = {
+    labels: stock.dividendHistory.map(div => div.year),
+    datasets: [
+      {
+        label: 'Dividend Amount (₹)',
+        data: stock.dividendHistory.map(div => div.amount),
+        backgroundColor: 'rgba(136, 132, 216, 0.6)',
+        borderColor: 'rgba(136, 132, 216, 1)',
+        borderWidth: 1,
+        borderRadius: 4,
+      },
+      {
+        label: 'Yield (%)',
+        data: stock.dividendHistory.map(div => div.yieldPercentage),
+        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+        borderColor: 'rgba(255, 99, 132, 1)',
+        borderWidth: 1,
+        borderRadius: 4,
+        yAxisID: 'y1',
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: 'Dividend History',
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Amount (₹)'
+        }
+      },
+      y1: {
+        position: 'right' as const,
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Yield (%)'
+        },
+        grid: {
+          drawOnChartArea: false,
+        },
+      },
+    },
+  };
 
   return (
     <div className="min-h-screen pb-12">
@@ -78,7 +178,7 @@ const DividendHistory = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <Card>
                 <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground">Total Dividends (5 Years)</p>
+                  <p className="text-sm text-muted-foreground">Total Dividends</p>
                   <p className="text-2xl font-bold">₹{totalDividends.toFixed(2)}</p>
                 </CardContent>
               </Card>
@@ -90,24 +190,9 @@ const DividendHistory = () => {
               </Card>
             </div>
             
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Year</TableHead>
-                  <TableHead>Dividend Amount (₹)</TableHead>
-                  <TableHead>Yield (%)</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {stock.dividendHistory.map((dividend, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{dividend.year}</TableCell>
-                    <TableCell>₹{dividend.amount.toFixed(2)}</TableCell>
-                    <TableCell>{dividend.yieldPercentage.toFixed(2)}%</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="h-80 mb-6">
+              <Bar data={chartData} options={options} />
+            </div>
             
             <div className="mt-6">
               <p className="text-sm text-muted-foreground">

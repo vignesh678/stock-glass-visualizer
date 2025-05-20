@@ -2,13 +2,35 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getStockDetailById, StockDetailData } from '@/data/niftyStocks';
+import { stocksData } from '@/data/stockData';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const HighLowData = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,8 +43,18 @@ const HighLowData = () => {
       setIsLoading(true);
       if (!id) return;
       
+      // Try to get detailed data from niftyStocks
       const detailedData = getStockDetailById(parseInt(id));
-      setStock(detailedData);
+      
+      // If no detailed data is found, use data from stocksData
+      if (!detailedData) {
+        const stockData = stocksData.find(s => s.id === id);
+        if (stockData) {
+          setStock(stockData as unknown as StockDetailData);
+        }
+      } else {
+        setStock(detailedData);
+      }
     } catch (error) {
       toast.error("Failed to load high/low data");
       console.error(error);
@@ -42,12 +74,12 @@ const HighLowData = () => {
     );
   }
 
-  if (!stock) {
+  if (!stock || !stock.yearlyHighLow) {
     return (
       <div className="min-h-screen">
         <Navbar />
         <div className="container mx-auto px-4 py-8">
-          <p>Stock not found</p>
+          <p>Price range data not available for this stock</p>
           <Button onClick={() => navigate('/')}>Back to Dashboard</Button>
         </div>
       </div>
@@ -58,6 +90,88 @@ const HighLowData = () => {
   const highestPrice = Math.max(...stock.yearlyHighLow.map(item => item.high));
   const lowestPrice = Math.min(...stock.yearlyHighLow.map(item => item.low));
   const volatilityRange = (((highestPrice - lowestPrice) / lowestPrice) * 100).toFixed(2);
+
+  // Prepare data for Chart.js
+  const labels = stock.yearlyHighLow.map(item => item.year);
+  const highData = stock.yearlyHighLow.map(item => item.high);
+  const lowData = stock.yearlyHighLow.map(item => item.low);
+  const rangeData = stock.yearlyHighLow.map(item => item.high - item.low);
+  
+  const chartData = {
+    labels,
+    datasets: [
+      {
+        type: 'bar' as const,
+        label: 'Price Range',
+        data: rangeData,
+        backgroundColor: 'rgba(53, 162, 235, 0.3)',
+        borderWidth: 0
+      },
+      {
+        type: 'line' as const,
+        label: 'High Price',
+        data: highData,
+        borderColor: 'rgba(255, 99, 132, 1)',
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+        pointStyle: 'circle',
+        pointRadius: 5,
+        pointHoverRadius: 8
+      },
+      {
+        type: 'line' as const,
+        label: 'Low Price',
+        data: lowData,
+        borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+        pointStyle: 'circle',
+        pointRadius: 5,
+        pointHoverRadius: 8
+      }
+    ]
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: 'Yearly High/Low Price Range',
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context: any) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed.y !== null) {
+              label += '₹' + context.parsed.y.toFixed(2);
+            }
+            return label;
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: false,
+        title: {
+          display: true,
+          text: 'Price (₹)'
+        }
+      },
+      x: {
+        title: {
+          display: true,
+          text: 'Year'
+        }
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen pb-12">
@@ -99,48 +213,15 @@ const HighLowData = () => {
               </Card>
             </div>
             
-            <div className="h-64 mb-6">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={stock.yearlyHighLow.slice().reverse()}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="year" />
-                  <YAxis />
-                  <Tooltip
-                    formatter={(value) => [`₹${value}`, undefined]}
-                    labelFormatter={(label) => `Year: ${label}`}
-                  />
-                  <Legend />
-                  <Line type="monotone" dataKey="high" stroke="#8884d8" name="Yearly High" />
-                  <Line type="monotone" dataKey="low" stroke="#82ca9d" name="Yearly Low" />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="h-80 mb-6">
+              <Bar data={chartData} options={options} />
             </div>
             
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Year</TableHead>
-                  <TableHead>High (₹)</TableHead>
-                  <TableHead>Low (₹)</TableHead>
-                  <TableHead>Range (%)</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {stock.yearlyHighLow.map((data, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{data.year}</TableCell>
-                    <TableCell>₹{data.high.toFixed(2)}</TableCell>
-                    <TableCell>₹{data.low.toFixed(2)}</TableCell>
-                    <TableCell>
-                      {(((data.high - data.low) / data.low) * 100).toFixed(2)}%
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="mt-6">
+              <p className="text-sm text-muted-foreground">
+                * Note: Price range represents the difference between yearly high and low prices.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
